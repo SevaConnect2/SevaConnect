@@ -31,6 +31,11 @@
             My Profile
         </a>
 
+        <!-- NEW: VOLUNTEER ACTIVITY HISTORY -->
+        <a href="{{ url_for('volunteer_history') }}">
+            📋 My Activity History
+        </a>
+
         <a href="{{ url_for('logout') }}">
             Logout
         </a>
@@ -72,9 +77,7 @@
         <!-- Recommendations -->
         <div class="stat-card">
 
-            <div class="stat-icon">
-                🎯
-            </div>
+            <div class="stat-icon">🎯</div>
 
             <div class="stat-number">
                 {{ recommendations|length }}
@@ -90,9 +93,7 @@
         <!-- Applications -->
         <div class="stat-card">
 
-            <div class="stat-icon">
-                📋
-            </div>
+            <div class="stat-icon">📋</div>
 
             <div class="stat-number">
                 {{ applications|length }}
@@ -108,9 +109,7 @@
         <!-- Completed -->
         <div class="stat-card">
 
-            <div class="stat-icon">
-                🤝
-            </div>
+            <div class="stat-icon">🤝</div>
 
             <div class="stat-number">
                 {{ completed_activities|default(0) }}
@@ -126,9 +125,7 @@
         <!-- Profile -->
         <div class="stat-card">
 
-            <div class="stat-icon">
-                ⭐
-            </div>
+            <div class="stat-icon">⭐</div>
 
             <div class="stat-number">
                 {% if profile %}
@@ -183,8 +180,7 @@
                     </span>
 
                     <span class="score-badge">
-                        {{ opportunity["score"] }}%
-                        Match
+                        {{ opportunity["score"] }}% Match
                     </span>
 
                 </div>
@@ -204,26 +200,21 @@
                 <div class="opportunity-details">
 
                     <span>
-                        📍
-                        {{ opportunity["location"] }}
+                        📍 {{ opportunity["location"] }}
                     </span>
 
                     <span>
-                        💻
-                        {{ opportunity["mode"] }}
+                        💻 {{ opportunity["mode"] }}
                     </span>
 
                     <span>
-                        ⏰
-                        {{ opportunity["hours_required"] }}
-                        hrs
+                        ⏰ {{ opportunity["hours_required"] }} hrs
                     </span>
 
                 </div>
 
 
                 <!-- Apply Button -->
-
                 <form
                     action="{{ url_for(
                         'apply_opportunity',
@@ -232,10 +223,7 @@
                     method="POST"
                 >
 
-                    <button
-                        type="submit"
-                        class="view-btn"
-                    >
+                    <button type="submit" class="view-btn">
                         Apply Now
                     </button>
 
@@ -251,13 +239,9 @@
 
         <div class="empty-state">
 
-            <div class="empty-icon">
-                🔍
-            </div>
+            <div class="empty-icon">🔍</div>
 
-            <h3>
-                No recommendations yet
-            </h3>
+            <h3>No recommendations yet</h3>
 
             <p>
                 Complete your profile to receive personalized
@@ -283,15 +267,11 @@
         <div class="section-heading">
 
             <div>
-
-                <h2>
-                    My Applications
-                </h2>
+                <h2>My Applications</h2>
 
                 <p>
                     Track the opportunities you have applied for.
                 </p>
-
             </div>
 
         </div>
@@ -313,24 +293,19 @@
                     </h3>
 
                     <p class="application-ngo">
-
                         🏢
                         {{ application["ngo_name"] or "Organization" }}
-
                     </p>
 
 
                     <div class="application-meta">
 
                         <span>
-                            ❤️
-                            {{ application["cause"] }}
+                            ❤️ {{ application["cause"] }}
                         </span>
 
                         <span>
-                            📅
-                            Applied:
-                            {{ application["applied_at"] }}
+                            📅 Applied: {{ application["applied_at"] }}
                         </span>
 
                     </div>
@@ -353,6 +328,12 @@
                             ✕ Rejected
                         </span>
 
+                    {% elif application["status"] == "Completed" %}
+
+                        <span class="status-badge accepted">
+                            ✓ Completed
+                        </span>
+
                     {% else %}
 
                         <span class="status-badge pending">
@@ -373,17 +354,12 @@
 
         <div class="empty-state">
 
-            <div class="empty-icon">
-                📋
-            </div>
+            <div class="empty-icon">📋</div>
 
-            <h3>
-                No applications yet
-            </h3>
+            <h3>No applications yet</h3>
 
             <p>
-                When you apply for an opportunity, it will appear
-                here.
+                When you apply for an opportunity, it will appear here.
             </p>
 
         </div>
@@ -394,14 +370,36 @@
 
 
 
+    <!-- ================= ACTIVITY HISTORY ================= -->
+    <section class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+                <h2>My Volunteer Journey</h2>
+
+                <p>
+                    Review activities completed and confirmed by NGOs.
+                </p>
+            </div>
+
+            <a href="{{ url_for('volunteer_history') }}"
+               class="primary-button">
+                📋 View Activity History
+            </a>
+
+        </div>
+
+    </section>
+
+
+
     <!-- ================= PROFILE ================= -->
     <section class="profile-summary">
 
         <div>
 
-            <h2>
-                Your Volunteer Profile
-            </h2>
+            <h2>Your Volunteer Profile</h2>
 
             <p>
                 Keep your profile updated so SevaConnect can provide
@@ -421,9 +419,7 @@
 
         <a href="{{ url_for('volunteer_profile') }}"
            class="primary-button">
-
             Edit Profile
-
         </a>
 
     </section>
@@ -437,29 +433,20 @@
     <div class="footer-content">
 
         <div>
-
-            <h3>
-                🤝 SevaConnect
-            </h3>
+            <h3>🤝 SevaConnect</h3>
 
             <p>
-                Connecting volunteers with meaningful
-                opportunities.
+                Connecting volunteers with meaningful opportunities.
             </p>
-
         </div>
 
 
         <div>
-
-            <p>
-                © 2026 SevaConnect
-            </p>
+            <p>© 2026 SevaConnect</p>
 
             <p>
                 Community • Service • Impact
             </p>
-
         </div>
 
     </div>

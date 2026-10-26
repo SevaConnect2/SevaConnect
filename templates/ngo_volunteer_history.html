@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer History | SevaConnect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .history-wrap {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .history-card {
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            margin: 16px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+            border: 1px solid #e8e8e8;
+        }
+
+        .history-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .muted {
+            color: #666;
+        }
+
+        .hours {
+            font-weight: 700;
+            color: #198754;
+        }
+
+        .empty {
+            background: white;
+            border-radius: 14px;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{{ url_for('home') }}" class="logo">🤝 SevaConnect</a>
+
+        <div class="nav-links">
+            <a href="{{ url_for('ngo_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('ngo_profile') }}">NGO Profile</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<main class="history-wrap">
+
+    <h1>Volunteer History</h1>
+
+    <p class="muted">
+        <strong>{{ volunteer['name'] }}</strong>
+        · {{ volunteer['email'] }}
+    </p>
+
+    <p>
+        Showing this volunteer's confirmed activities with your NGO only.
+    </p>
+
+    {% if history %}
+
+        {% for item in history %}
+
+            <section class="history-card">
+
+                <div class="history-top">
+                    <div>
+                        <h2>{{ item['opportunity_title'] }}</h2>
+
+                        <p class="muted">
+                            {{ item['location'] or 'Location not provided' }}
+
+                            {% if item['mode'] %}
+                                · {{ item['mode'] }}
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <span class="hours">
+                        {{ item['hours_completed'] }} confirmed hours
+                    </span>
+                </div>
+
+                <p>
+                    <strong>Confirmed on:</strong>
+                    {{ item['completed_at'] }}
+                </p>
+
+            </section>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+            <h2>No confirmed activities with your NGO yet</h2>
+
+            <p>
+                When you confirm a volunteer's activity, it will appear here.
+            </p>
+        </div>
+
+    {% endif %}
+
+    <a
+        class="primary-button"
+        href="{{ url_for('ngo_dashboard') }}"
+    >
+        Back to NGO Dashboard
+    </a>
+
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div>
+            <h3>🤝 SevaConnect</h3>
+            <p>Connecting volunteers with meaningful opportunities.</p>
+        </div>
+
+        <div>
+            <p>© 2026 SevaConnect</p>
+            <p>Community • Service • Impact</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

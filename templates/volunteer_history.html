@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Activity History | SevaConnect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .history-wrap {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .history-card {
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            margin: 16px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+            border: 1px solid #e8e8e8;
+        }
+
+        .history-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .muted {
+            color: #666;
+        }
+
+        .hours {
+            font-weight: 700;
+            color: #198754;
+        }
+
+        .empty {
+            background: white;
+            border-radius: 14px;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{{ url_for('home') }}" class="logo">🤝 SevaConnect</a>
+
+        <div class="nav-links">
+            <a href="{{ url_for('volunteer_dashboard') }}">Dashboard</a>
+            <a class="active" href="{{ url_for('volunteer_history') }}">
+                My Activity History
+            </a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<main class="history-wrap">
+
+    <h1>My Activity History</h1>
+
+    <p class="muted">
+        Your completed volunteer activities appear here after an NGO confirms them.
+    </p>
+
+    {% if history %}
+
+        {% for item in history %}
+
+            <section class="history-card">
+
+                <div class="history-top">
+                    <div>
+                        <h2>{{ item['opportunity_title'] }}</h2>
+
+                        <p class="muted">
+                            {{ item['ngo_name'] }}
+
+                            {% if item['ngo_location'] %}
+                                · {{ item['ngo_location'] }}
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <span class="hours">
+                        {{ item['hours_completed'] }} confirmed hours
+                    </span>
+                </div>
+
+                <p>
+                    <strong>Confirmed on:</strong>
+                    {{ item['completed_at'] }}
+                </p>
+
+                {% if item['location'] %}
+                    <p>
+                        <strong>Opportunity location:</strong>
+                        {{ item['location'] }}
+                    </p>
+                {% endif %}
+
+                {% if item['mode'] %}
+                    <p>
+                        <strong>Mode:</strong>
+                        {{ item['mode'] }}
+                    </p>
+                {% endif %}
+
+            </section>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+            <h2>No completed activities yet</h2>
+
+            <p>
+                Once an NGO confirms an activity, it will appear here.
+            </p>
+
+            <a
+                class="primary-button"
+                href="{{ url_for('volunteer_dashboard') }}"
+            >
+                Back to Dashboard
+            </a>
+        </div>
+
+    {% endif %}
+
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div>
+            <h3>🤝 SevaConnect</h3>
+            <p>Connecting volunteers with meaningful opportunities.</p>
+        </div>
+
+        <div>
+            <p>© 2026 SevaConnect</p>
+            <p>Community • Service • Impact</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

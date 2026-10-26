@@ -172,12 +172,14 @@
 
         .info-value {
             font-weight: 500;
+            overflow-wrap: anywhere;
         }
 
         .application-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .action-button {
@@ -187,6 +189,10 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .accept-button {
@@ -240,9 +246,30 @@
             color: #666;
         }
 
-        /* FIND VOLUNTEERS NAVIGATION */
         .find-volunteers-link {
             font-weight: 600;
+        }
+
+        .completion-form {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .hours-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .hours-field input {
+            width: 140px;
+            padding: 9px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
         }
 
         @media (max-width: 900px) {
@@ -257,7 +284,6 @@
         }
 
         @media (max-width: 800px) {
-
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -278,7 +304,6 @@
         }
 
         @media (max-width: 600px) {
-
             .nav-container {
                 flex-direction: column;
                 gap: 15px;
@@ -291,38 +316,34 @@
         }
 
         @media (max-width: 500px) {
-
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .section-card {
+                padding: 16px;
+            }
+
+            .applicant-card {
+                padding: 16px;
             }
         }
     </style>
 </head>
 
-
 <body>
 
-<!-- =====================================================
-     NAVBAR
-===================================================== -->
-
+<!-- NAVBAR -->
 <nav class="navbar">
-
     <div class="nav-container">
 
-        <a
-            href="{{ url_for('home') }}"
-            class="logo"
-        >
+        <a href="{{ url_for('home') }}" class="logo">
             🤝 SevaConnect
         </a>
 
         <div class="nav-links">
 
-            <a
-                href="{{ url_for('ngo_dashboard') }}"
-                class="active"
-            >
+            <a href="{{ url_for('ngo_dashboard') }}" class="active">
                 Dashboard
             </a>
 
@@ -334,7 +355,6 @@
                 Create Opportunity
             </a>
 
-            <!-- NEW: NGO CAN FIND AND APPROACH VOLUNTEERS -->
             <a
                 href="{{ url_for('find_volunteers') }}"
                 class="find-volunteers-link"
@@ -347,25 +367,15 @@
             </a>
 
         </div>
-
     </div>
-
 </nav>
 
-
-<!-- =====================================================
-     MAIN
-===================================================== -->
-
+<!-- MAIN CONTENT -->
 <main class="dashboard-container">
 
-
     <!-- HEADER -->
-
     <section class="dashboard-header">
-
         <div>
-
             <h1>
                 Welcome,
                 {{ ngo["name"] if ngo else session.get("name", "NGO") }} 🏢
@@ -374,7 +384,6 @@
             <p>
                 Manage your volunteer opportunities and applications.
             </p>
-
         </div>
 
         <a
@@ -383,79 +392,37 @@
         >
             + Create Opportunity
         </a>
-
     </section>
 
-
-    <!-- =================================================
-         STATISTICS
-    ================================================== -->
-
+    <!-- STATISTICS -->
     <section class="stats-grid">
 
         <div class="stat-card">
-
-            <h3>
-                {{ opportunities|length }}
-            </h3>
-
-            <p>
-                Opportunities
-            </p>
-
+            <h3>{{ opportunities|length }}</h3>
+            <p>Opportunities</p>
         </div>
 
-
         <div class="stat-card">
-
-            <h3>
-                {{ total_applications }}
-            </h3>
-
-            <p>
-                Applications
-            </p>
-
+            <h3>{{ total_applications }}</h3>
+            <p>Applications</p>
         </div>
 
-
         <div class="stat-card">
-
-            <h3>
-                {{ pending_applications }}
-            </h3>
-
-            <p>
-                Pending
-            </p>
-
+            <h3>{{ pending_applications }}</h3>
+            <p>Pending</p>
         </div>
 
-
         <div class="stat-card">
-
-            <h3>
-                {{ accepted_applications }}
-            </h3>
-
-            <p>
-                Accepted
-            </p>
-
+            <h3>{{ accepted_applications }}</h3>
+            <p>Accepted</p>
         </div>
 
     </section>
 
-
-    <!-- =================================================
-         MY OPPORTUNITIES
-    ================================================== -->
-
+    <!-- MY OPPORTUNITIES -->
     <section class="section-card">
 
-        <h2>
-            My Opportunities
-        </h2>
+        <h2>My Opportunities</h2>
 
         {% if opportunities %}
 
@@ -463,9 +430,7 @@
 
                 <div class="opportunity-card">
 
-                    <h3>
-                        {{ opportunity["title"] }}
-                    </h3>
+                    <h3>{{ opportunity["title"] }}</h3>
 
                     <div class="opportunity-details">
 
@@ -513,7 +478,6 @@
                         ) }}"
                         method="POST"
                     >
-
                         <button
                             type="submit"
                             class="danger-button"
@@ -521,7 +485,6 @@
                         >
                             Delete
                         </button>
-
                     </form>
 
                 </div>
@@ -531,10 +494,7 @@
         {% else %}
 
             <div class="empty-state">
-
-                <h3>
-                    No opportunities yet
-                </h3>
+                <h3>No opportunities yet</h3>
 
                 <p>
                     Create your first volunteer opportunity.
@@ -546,29 +506,21 @@
                 >
                     Create Opportunity
                 </a>
-
             </div>
 
         {% endif %}
 
     </section>
 
-
-    <!-- =================================================
-         VOLUNTEER APPLICANTS
-    ================================================== -->
-
+    <!-- VOLUNTEER APPLICANTS -->
     <section class="section-card">
 
-        <h2>
-            Volunteer Applicants
-        </h2>
+        <h2>Volunteer Applicants</h2>
 
         <p style="color:#666;">
             Volunteers who have applied to your opportunities
             are shown below.
         </p>
-
 
         {% if applicants %}
 
@@ -576,13 +528,10 @@
 
                 <div class="applicant-card">
 
-
                     <!-- APPLICANT HEADER -->
-
                     <div class="applicant-header">
 
                         <div>
-
                             <div class="applicant-name">
                                 {{ applicant["volunteer_name"] }}
                             </div>
@@ -590,12 +539,9 @@
                             <div class="applicant-email">
                                 {{ applicant["volunteer_email"] }}
                             </div>
-
                         </div>
 
-
                         <!-- STATUS -->
-
                         {% if applicant["status"] == "Pending" %}
 
                             <span class="status-badge status-pending">
@@ -624,137 +570,80 @@
 
                     </div>
 
-
                     <!-- OPPORTUNITY -->
-
                     <div class="opportunity-tag">
-
                         Applied for:
-
                         <strong>
                             {{ applicant["opportunity_title"] }}
                         </strong>
-
                     </div>
 
-
                     <!-- VOLUNTEER INFORMATION -->
-
                     <div class="applicant-info">
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Skills
-                            </div>
-
+                            <div class="info-label">Skills</div>
                             <div class="info-value">
                                 {{ applicant["skills"] or "Not provided" }}
                             </div>
-
                         </div>
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Interests
-                            </div>
-
+                            <div class="info-label">Interests</div>
                             <div class="info-value">
                                 {{ applicant["interests"] or "Not provided" }}
                             </div>
-
                         </div>
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Location
-                            </div>
-
+                            <div class="info-label">Location</div>
                             <div class="info-value">
                                 {{ applicant["location"] or "Not provided" }}
                             </div>
-
                         </div>
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Availability
-                            </div>
-
+                            <div class="info-label">Availability</div>
                             <div class="info-value">
                                 {{ applicant["availability"] or "Not provided" }}
                             </div>
-
                         </div>
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Experience
-                            </div>
-
+                            <div class="info-label">Experience</div>
                             <div class="info-value">
                                 {{ applicant["experience"] or "Not provided" }}
                             </div>
-
                         </div>
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Preferred Mode
-                            </div>
-
+                            <div class="info-label">Preferred Mode</div>
                             <div class="info-value">
                                 {{ applicant["preferred_mode"] or "Not provided" }}
                             </div>
-
                         </div>
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Hours Per Week
-                            </div>
-
+                            <div class="info-label">Hours Per Week</div>
                             <div class="info-value">
                                 {{ applicant["hours_per_week"] or "Not provided" }}
                             </div>
-
                         </div>
 
-
                         <div class="info-item">
-
-                            <div class="info-label">
-                                Applied On
-                            </div>
-
+                            <div class="info-label">Applied On</div>
                             <div class="info-value">
                                 {{ applicant["applied_at"] }}
                             </div>
-
                         </div>
 
                     </div>
 
-
                     <!-- APPLICATION ACTIONS -->
-
                     <div class="application-actions">
 
-
-                        {% if applicant["status"] != "Accepted" %}
+                        {% if applicant["status"] != "Accepted"
+                              and applicant["status"] != "Completed" %}
 
                             <form
                                 action="{{ url_for(
@@ -764,20 +653,18 @@
                                 ) }}"
                                 method="POST"
                             >
-
                                 <button
                                     type="submit"
                                     class="action-button accept-button"
                                 >
                                     ✓ Accept
                                 </button>
-
                             </form>
 
                         {% endif %}
 
-
-                        {% if applicant["status"] != "Rejected" %}
+                        {% if applicant["status"] != "Rejected"
+                              and applicant["status"] != "Completed" %}
 
                             <form
                                 action="{{ url_for(
@@ -787,20 +674,18 @@
                                 ) }}"
                                 method="POST"
                             >
-
                                 <button
                                     type="submit"
                                     class="action-button reject-button"
                                 >
                                     ✕ Reject
                                 </button>
-
                             </form>
 
                         {% endif %}
 
-
-                        {% if applicant["status"] != "Pending" %}
+                        {% if applicant["status"] != "Pending"
+                              and applicant["status"] != "Completed" %}
 
                             <form
                                 action="{{ url_for(
@@ -810,19 +695,17 @@
                                 ) }}"
                                 method="POST"
                             >
-
                                 <button
                                     type="submit"
                                     class="action-button pending-button"
                                 >
                                     ⏳ Mark Pending
                                 </button>
-
                             </form>
 
                         {% endif %}
 
-
+                        <!-- NGO CONFIRMS COMPLETION AND HOURS -->
                         {% if applicant["status"] == "Accepted" %}
 
                             <form
@@ -832,19 +715,45 @@
                                     new_status='Completed'
                                 ) }}"
                                 method="POST"
+                                class="completion-form"
+                                onsubmit="return confirm('Confirm that this volunteer completed the activity?');"
                             >
+
+                                <label class="hours-field">
+                                    Hours completed
+
+                                    <input
+                                        type="number"
+                                        name="hours_completed"
+                                        min="0"
+                                        max="10000"
+                                        step="1"
+                                        value="0"
+                                        required
+                                    >
+                                </label>
 
                                 <button
                                     type="submit"
                                     class="action-button complete-button"
                                 >
-                                    ✓ Mark Completed
+                                    ✓ Confirm Completion
                                 </button>
 
                             </form>
 
                         {% endif %}
 
+                        <!-- VIEW THIS VOLUNTEER'S HISTORY WITH THIS NGO -->
+                        <a
+                            href="{{ url_for(
+                                'ngo_volunteer_history',
+                                volunteer_user_id=applicant['user_id']
+                            ) }}"
+                            class="action-button pending-button"
+                        >
+                            View History with This NGO
+                        </a>
 
                     </div>
 
@@ -852,14 +761,11 @@
 
             {% endfor %}
 
-
         {% else %}
 
             <div class="empty-state">
 
-                <h3>
-                    👥 No applications yet
-                </h3>
+                <h3>👥 No applications yet</h3>
 
                 <p>
                     Volunteer applications will appear here
@@ -872,20 +778,14 @@
 
     </section>
 
-
-    <!-- =================================================
-         NGO PROFILE SUMMARY
-    ================================================== -->
-
+    <!-- NGO PROFILE SUMMARY -->
     {% if ngo %}
 
         <section class="profile-summary">
 
             <div>
 
-                <h2>
-                    {{ ngo["name"] }}
-                </h2>
+                <h2>{{ ngo["name"] }}</h2>
 
                 <p>
                     {{ ngo["description"] or
@@ -906,7 +806,6 @@
 
             </div>
 
-
             <a
                 href="{{ url_for('ngo_profile') }}"
                 class="primary-button"
@@ -918,40 +817,24 @@
 
     {% endif %}
 
-
 </main>
 
-
-<!-- =====================================================
-     FOOTER
-===================================================== -->
-
+<!-- FOOTER -->
 <footer class="footer">
 
     <div class="footer-content">
 
         <div>
-
-            <h3>
-                🤝 SevaConnect
-            </h3>
+            <h3>🤝 SevaConnect</h3>
 
             <p>
                 Connecting volunteers with meaningful opportunities.
             </p>
-
         </div>
 
         <div>
-
-            <p>
-                © 2026 SevaConnect
-            </p>
-
-            <p>
-                Community • Service • Impact
-            </p>
-
+            <p>© 2026 SevaConnect</p>
+            <p>Community • Service • Impact</p>
         </div>
 
     </div>

@@ -392,6 +392,40 @@ def init_database():
         """
     )
 
+    # --------------------------------------------------------
+    # CONFIRMED VOLUNTEER ACTIVITY HISTORY
+    # A record is created only when the responsible NGO marks
+    # an accepted application as Completed.
+    # --------------------------------------------------------
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS volunteer_activity_history (
+            history_id SERIAL PRIMARY KEY,
+            application_id INTEGER UNIQUE NOT NULL,
+            volunteer_user_id INTEGER NOT NULL,
+            ngo_id INTEGER NOT NULL,
+            opportunity_id INTEGER NOT NULL,
+            hours_completed INTEGER NOT NULL DEFAULT 0,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            confirmed_by_user_id INTEGER NOT NULL
+        )
+        """
+        if connection.is_postgres
+        else
+        """
+        CREATE TABLE IF NOT EXISTS volunteer_activity_history (
+            history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            application_id INTEGER UNIQUE NOT NULL,
+            volunteer_user_id INTEGER NOT NULL,
+            ngo_id INTEGER NOT NULL,
+            opportunity_id INTEGER NOT NULL,
+            hours_completed INTEGER NOT NULL DEFAULT 0,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            confirmed_by_user_id INTEGER NOT NULL
+        )
+        """
+    )
+
     connection.commit()
     connection.close()
 
@@ -1880,6 +1914,7 @@ def volunteer_invitations():
             ngos.location AS ngo_location,
             opportunities.opportunity_id,
             opportunities.title AS opportunity_title,
+            opportunities.hours_required,
             opportunities.cause,
             opportunities.required_skills,
             opportunities.location,
@@ -2197,7 +2232,12 @@ def update_application_status(
     application = connection.execute(
         """
         SELECT
-            applications.application_id
+            applications.application_id,
+            applications.user_id,
+            applications.opportunity_id,
+            applications.status AS current_status,
+            opportunities.hours_required,
+            opportunities.ngo_id
         FROM applications
 
         INNER JOIN opportunities
@@ -2223,27 +2263,142 @@ def update_application_status(
         )
 
     # --------------------------------------------------------
-    # UPDATE STATUS
+    # COMPLETION CAN ONLY BE CONFIRMED BY THE RESPONSIBLE NGO.
+    # Only accepted applications can be marked Completed.
     # --------------------------------------------------------
+    if new_status == "Completed":
+        if application["current_status"] != "Accepted":
+            connection.close()
+            flash("Only accepted applications can be marked completed.", "error")
+            return redirect(url_for("ngo_dashboard"))
 
-    connection.execute(
-        """
-        UPDATE applications
-        SET status = ?
-        WHERE application_id = ?
-        """,
-        (
-            new_status,
-            application_id
+        try:
+            submitted_hours = int(request.form.get("hours_completed", "") or application["hours_required"] or 0)
+        except (TypeError, ValueError):
+            submitted_hours = int(application["hours_required"] or 0)
+
+        if submitted_hours < 0 or submitted_hours > 10000:
+            connection.close()
+            flash("Enter a valid number of completed hours.", "error")
+            return redirect(url_for("ngo_dashboard"))
+
+        connection.execute(
+            """
+            UPDATE applications
+            SET status = ?
+            WHERE application_id = ?
+            """,
+            (new_status, application_id)
         )
-    )
+
+        existing_history = connection.execute(
+            "SELECT history_id FROM volunteer_activity_history WHERE application_id = ?",
+            (application_id,)
+        ).fetchone()
+
+        if not existing_history:
+            connection.execute(
+                """
+                INSERT INTO volunteer_activity_history
+                    (application_id, volunteer_user_id, ngo_id, opportunity_id,
+                     hours_completed, confirmed_by_user_id)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (application_id, application["user_id"], ngo["ngo_id"],
+                 application["opportunity_id"], submitted_hours, session["user_id"])
+            )
+        else:
+            connection.execute(
+                """
+                UPDATE volunteer_activity_history
+                SET hours_completed = ?, confirmed_by_user_id = ?
+                WHERE application_id = ?
+                """,
+                (submitted_hours, session["user_id"], application_id)
+            )
+    else:
+        connection.execute(
+            """
+            UPDATE applications
+            SET status = ?
+            WHERE application_id = ?
+            """,
+            (new_status, application_id)
+        )
 
     connection.commit()
     connection.close()
 
+    if new_status == "Completed":
+        flash("Activity completion confirmed and saved to history.", "success")
+
     return redirect(
         url_for("ngo_dashboard")
     )
+
+
+# ============================================================
+# VOLUNTEER ACTIVITY HISTORY (volunteer sees only own records)
+# ============================================================
+@app.route("/volunteer-history")
+def volunteer_history():
+    if "user_id" not in session or session.get("role") != "volunteer":
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+    history = connection.execute(
+        """
+        SELECT h.history_id, h.hours_completed, h.completed_at,
+               o.title AS opportunity_title, o.location, o.mode,
+               n.name AS ngo_name, n.location AS ngo_location
+        FROM volunteer_activity_history h
+        JOIN opportunities o ON o.opportunity_id = h.opportunity_id
+        JOIN ngos n ON n.ngo_id = h.ngo_id
+        WHERE h.volunteer_user_id = ?
+        ORDER BY h.completed_at DESC
+        """,
+        (session["user_id"],)
+    ).fetchall()
+    connection.close()
+    return render_template("volunteer_history.html", history=history)
+
+
+# ============================================================
+# NGO VIEW OF A VOLUNTEER'S HISTORY WITH THIS NGO ONLY
+# ============================================================
+@app.route("/ngo/volunteer-history/<int:volunteer_user_id>")
+def ngo_volunteer_history(volunteer_user_id):
+    if "user_id" not in session or session.get("role") != "ngo":
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+    ngo = get_ngo_for_user(connection, session["user_id"])
+    if not ngo:
+        connection.close()
+        return redirect(url_for("ngo_profile"))
+
+    volunteer = connection.execute(
+        "SELECT user_id, name, email FROM users WHERE user_id = ? AND role = 'volunteer'",
+        (volunteer_user_id,)
+    ).fetchone()
+    if not volunteer:
+        connection.close()
+        flash("Volunteer not found.", "error")
+        return redirect(url_for("ngo_dashboard"))
+
+    history = connection.execute(
+        """
+        SELECT h.history_id, h.hours_completed, h.completed_at,
+               o.title AS opportunity_title, o.location, o.mode
+        FROM volunteer_activity_history h
+        JOIN opportunities o ON o.opportunity_id = h.opportunity_id
+        WHERE h.volunteer_user_id = ? AND h.ngo_id = ?
+        ORDER BY h.completed_at DESC
+        """,
+        (volunteer_user_id, ngo["ngo_id"])
+    ).fetchall()
+    connection.close()
+    return render_template("ngo_volunteer_history.html", volunteer=volunteer, history=history, ngo=ngo)
 
 
 # ============================================================
