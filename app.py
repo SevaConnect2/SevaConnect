@@ -1191,6 +1191,21 @@ def volunteer_dashboard():
 
             recommendations = []
 
+    # TEMPORARY DEBUGGING: inspect recommendation scores in the terminal.
+    print("\n========== SEVACONNECT RECOMMENDATION DEBUG ==========")
+    print("Volunteer profile found:", bool(profile))
+    print("Unapplied opportunities:", len(available_opportunities))
+    print("Recommendations before fallback:", len(recommendations))
+    for item in recommendations:
+        print(
+            "Opportunity ID:", item.get("opportunity_id"),
+            "| Title:", item.get("title"),
+            "| Score:", item.get("score"),
+            "| Match score:", item.get("match_score"),
+            "| Keys:", list(item.keys())
+        )
+    print("======================================================\n")
+
     # If the profile is incomplete or the recommendation engine
     # cannot produce results, show the latest unapplied opportunities.
     if not recommendations:
@@ -1200,6 +1215,10 @@ def volunteer_dashboard():
         )[:5]
 
     recommendations = recommendations[:5]
+
+    print("Final dashboard recommendation scores:", [
+        item.get("score") for item in recommendations
+    ])
 
     connection.close()
 
