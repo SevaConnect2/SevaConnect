@@ -1117,6 +1117,9 @@ def volunteer_dashboard():
         """
     ).fetchall()
 
+    # Convert database rows to dictionaries because matching.py uses .get().
+    opportunities = [dict(row) for row in opportunities]
+
     applications = connection.execute(
         """
         SELECT
@@ -1146,20 +1149,10 @@ def volunteer_dashboard():
     )
 
     # --------------------------------------------------------
-    # HYBRID RECOMMENDATIONS
+    # RECOMMENDATIONS
     # --------------------------------------------------------
 
     recommendations = []
-
-    # Do not recommend opportunities for which this volunteer
-    # has already submitted an application.
-    available_opportunities = [
-        opportunity
-        for opportunity in opportunities
-        if str(opportunity["opportunity_id"]) not in {
-            str(applied_id) for applied_id in applied_ids
-        }
-    ]
 
     if profile:
 
@@ -1174,13 +1167,66 @@ def volunteer_dashboard():
 
         try:
 
-            # matching.py returns flat opportunity dictionaries
-            # with the original database fields plus a match score.
-            recommendations = rank_opportunities(
+            # Do not recommend opportunities this volunteer has already applied for.
+            available_opportunities = [
+                opportunity
+                for opportunity in opportunities
+                if str(opportunity["opportunity_id"]) not in {
+                    str(applied_id) for applied_id in applied_ids
+                }
+            ]
+
+            # matching.py returns: {"opportunity": {...}, "score": number}
+            ranked_results = rank_opportunities(
                 volunteer_data,
                 available_opportunities,
                 top_n=5
             )
+
+            print("Recommendation module:", __import__("matching").__file__)
+            print("Ranked result count:", len(ranked_results or []))
+            print("First ranked result:", repr((ranked_results or [None])[0]))
+
+            fixed_recommendations = []
+
+            for result in ranked_results or []:
+                # Support both formats:
+                # 1) {"opportunity": {...}, "score": 85.5}
+                # 2) flat opportunity dictionary with "score" / "match_score".
+                if not isinstance(result, dict):
+                    result = dict(result)
+
+                opportunity_data = result.get("opportunity")
+                if opportunity_data is None:
+                    opportunity_data = result
+
+                if not isinstance(opportunity_data, dict):
+                    opportunity_data = dict(opportunity_data)
+
+                recommendation = dict(opportunity_data)
+                score = result.get("score")
+                if score is None:
+                    score = result.get("match_score")
+
+                # If the matching result has no ID, recover it by matching title.
+                if recommendation.get("opportunity_id") is None:
+                    result_title = str(
+                        recommendation.get("title", recommendation.get("opportunity_title", ""))
+                    ).strip().lower()
+                    for original in available_opportunities:
+                        if str(original.get("title", "")).strip().lower() == result_title:
+                            recommendation["opportunity_id"] = original.get("opportunity_id")
+                            break
+
+                if recommendation.get("opportunity_id") is None:
+                    print("Skipping recommendation without opportunity_id:", repr(result))
+                    continue
+
+                recommendation["score"] = score
+                recommendation["match_score"] = score
+                fixed_recommendations.append(recommendation)
+
+            recommendations = fixed_recommendations
 
         except Exception as error:
 
@@ -1191,34 +1237,28 @@ def volunteer_dashboard():
 
             recommendations = []
 
-    # TEMPORARY DEBUGGING: inspect recommendation scores in the terminal.
-    print("\n========== SEVACONNECT RECOMMENDATION DEBUG ==========")
-    print("Volunteer profile found:", bool(profile))
-    print("Unapplied opportunities:", len(available_opportunities))
-    print("Recommendations before fallback:", len(recommendations))
-    for item in recommendations:
-        print(
-            "Opportunity ID:", item.get("opportunity_id"),
-            "| Title:", item.get("title"),
-            "| Score:", item.get("score"),
-            "| Match score:", item.get("match_score"),
-            "| Keys:", list(item.keys())
-        )
-    print("======================================================\n")
-
-    # If the profile is incomplete or the recommendation engine
-    # cannot produce results, show the latest unapplied opportunities.
     if not recommendations:
 
-        recommendations = list(
-            available_opportunities
-        )[:5]
+        available_opportunities = [
+            opportunity
+            for opportunity in opportunities
+            if str(opportunity["opportunity_id"]) not in {
+                str(applied_id) for applied_id in applied_ids
+            }
+        ]
+
+        recommendations = [
+            dict(opportunity, score=None)
+            for opportunity in available_opportunities[:5]
+        ]
 
     recommendations = recommendations[:5]
 
-    print("Final dashboard recommendation scores:", [
-        item.get("score") for item in recommendations
-    ])
+    print("Volunteer profile found:", bool(profile))
+    print("Final recommendation sample:", repr(recommendations[0]) if recommendations else "NONE")
+    print("Unapplied opportunities:", len(available_opportunities) if profile else len(opportunities))
+    print("Recommendations shown:", len(recommendations))
+    print("Recommendation scores:", [item.get("score") for item in recommendations])
 
     connection.close()
 
