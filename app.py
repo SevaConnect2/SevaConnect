@@ -1146,10 +1146,20 @@ def volunteer_dashboard():
     )
 
     # --------------------------------------------------------
-    # RECOMMENDATIONS
+    # HYBRID RECOMMENDATIONS
     # --------------------------------------------------------
 
     recommendations = []
+
+    # Do not recommend opportunities for which this volunteer
+    # has already submitted an application.
+    available_opportunities = [
+        opportunity
+        for opportunity in opportunities
+        if str(opportunity["opportunity_id"]) not in {
+            str(applied_id) for applied_id in applied_ids
+        }
+    ]
 
     if profile:
 
@@ -1164,49 +1174,13 @@ def volunteer_dashboard():
 
         try:
 
+            # matching.py returns flat opportunity dictionaries
+            # with the original database fields plus a match score.
             recommendations = rank_opportunities(
                 volunteer_data,
-                opportunities
+                available_opportunities,
+                top_n=5
             )
-
-            # Ensure every recommendation keeps the database opportunity_id.
-            # The matching engine may return a reduced dictionary containing
-            # only matching fields, while the dashboard needs the real ID for
-            # the /apply/<opportunity_id> route.
-            fixed_recommendations = []
-
-            for recommendation in recommendations or []:
-
-                if hasattr(recommendation, "keys"):
-                    recommendation = dict(recommendation)
-                else:
-                    recommendation = dict(recommendation)
-
-                if recommendation.get("opportunity_id") is None:
-
-                    recommendation_title = str(
-                        recommendation.get(
-                            "opportunity_title",
-                            recommendation.get("title", "")
-                        )
-                    ).strip().lower()
-
-                    for original_opportunity in opportunities:
-
-                        original_title = str(
-                            original_opportunity["title"]
-                        ).strip().lower()
-
-                        if original_title == recommendation_title:
-                            recommendation["opportunity_id"] = (
-                                original_opportunity["opportunity_id"]
-                            )
-                            break
-
-                if recommendation.get("opportunity_id") is not None:
-                    fixed_recommendations.append(recommendation)
-
-            recommendations = fixed_recommendations
 
         except Exception as error:
 
@@ -1217,10 +1191,12 @@ def volunteer_dashboard():
 
             recommendations = []
 
+    # If the profile is incomplete or the recommendation engine
+    # cannot produce results, show the latest unapplied opportunities.
     if not recommendations:
 
         recommendations = list(
-            opportunities
+            available_opportunities
         )[:5]
 
     recommendations = recommendations[:5]

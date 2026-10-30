@@ -4,146 +4,12 @@ import math
 from collections import Counter
 
 
-# =====================================================
-# BASIC HELPERS
-# =====================================================
+# =========================================================
+# CONFIGURATION
+# =========================================================
 
-def get_value(data, key, default=""):
-    """Safely read values from dictionaries or database rows."""
-    try:
-        value = data[key]
-        return default if value is None else value
-    except (KeyError, IndexError, TypeError):
-        return default
-
-
-def make_list(value):
-    """Convert comma/semicolon separated values into a list."""
-    if not value:
-        return []
-
-    if isinstance(value, (list, tuple, set)):
-        return [
-            str(item).strip().lower()
-            for item in value if str(item).strip()
-        ]
-
-    return [
-        item.strip().lower()
-        for item in re.split(r"[,;]", str(value))
-        if item.strip()
-    ]
-
-
-def normalize_text(value):
-    return re.sub(r"\s+", " ", str(value or "").lower()).strip()
-
-
-# =====================================================
-# PROFILE MATCHING
-# =====================================================
-
-def skill_match(volunteer_skills, required_skills):
-    volunteer = set(make_list(volunteer_skills))
-    required = set(make_list(required_skills))
-
-    if not volunteer or not required:
-        return 0
-
-    return len(volunteer & required) / len(required)
-
-
-def interest_match(volunteer_interests, opportunity_cause):
-    interests = set(make_list(volunteer_interests))
-    cause = normalize_text(opportunity_cause)
-
-    if not interests or not cause:
-        return 0
-
-    for interest in interests:
-        if interest == cause or interest in cause or cause in interest:
-            return 1
-
-    return 0
-
-
-def location_match(volunteer_location, opportunity_location):
-    volunteer = normalize_text(volunteer_location)
-    opportunity = normalize_text(opportunity_location)
-
-    if not volunteer or not opportunity:
-        return 0
-
-    if volunteer == opportunity:
-        return 1
-
-    if "remote" in opportunity or "online" in opportunity:
-        return 1
-
-    return 0
-
-
-def availability_match(volunteer_availability, opportunity_availability):
-    volunteer = set(make_list(volunteer_availability))
-    opportunity = set(make_list(opportunity_availability))
-
-    if not volunteer or not opportunity:
-        return 0
-
-    return len(volunteer & opportunity) / len(opportunity)
-
-
-def experience_match(volunteer_experience, required_experience):
-    levels = {
-        "beginner": 1,
-        "basic": 1,
-        "no experience": 1,
-        "intermediate": 2,
-        "moderate": 2,
-        "advanced": 3,
-        "expert": 4
-    }
-
-    volunteer = normalize_text(volunteer_experience)
-    required = normalize_text(required_experience)
-
-    if not volunteer or not required:
-        return 0
-
-    if required in ("", "any", "none", "not required"):
-        return 1
-
-    volunteer_level = levels.get(volunteer)
-    required_level = levels.get(required)
-
-    if volunteer_level is None or required_level is None:
-        return 1 if volunteer == required else 0
-
-    if volunteer_level >= required_level:
-        return 1
-
-    return volunteer_level / required_level
-
-
-def mode_match(volunteer_mode, opportunity_mode):
-    volunteer = normalize_text(volunteer_mode)
-    opportunity = normalize_text(opportunity_mode)
-
-    if not volunteer or not opportunity:
-        return 0
-
-    if volunteer == opportunity:
-        return 1
-
-    if volunteer == "hybrid" or opportunity == "hybrid":
-        return 1
-
-    return 0
-
-
-# =====================================================
-# PROFILE SCORE
-# =====================================================
+PROFILE_WEIGHT = 0.60
+TEXT_WEIGHT = 0.40
 
 PROFILE_WEIGHTS = {
     "skills": 0.35,
@@ -154,264 +20,565 @@ PROFILE_WEIGHTS = {
     "mode": 0.10
 }
 
+EXPERIENCE_LEVELS = {
+    "beginner": 1,
+    "basic": 1,
+    "no experience": 1,
+    "intermediate": 2,
+    "moderate": 2,
+    "advanced": 3,
+    "expert": 4,
+    "professional": 4
+}
 
-def get_profile_factors(volunteer, opportunity):
-    """Calculate individual profile matching factors."""
-
-    factors = {}
-
-    volunteer_skills = get_value(volunteer, "skills")
-    required_skills = get_value(opportunity, "required_skills")
-
-    if volunteer_skills and required_skills:
-        factors["skills"] = skill_match(
-            volunteer_skills, required_skills
-        )
-
-    volunteer_interests = get_value(volunteer, "interests")
-    cause = get_value(opportunity, "cause")
-
-    if volunteer_interests and cause:
-        factors["interests"] = interest_match(
-            volunteer_interests, cause
-        )
-
-    volunteer_availability = get_value(volunteer, "availability")
-    opportunity_availability = get_value(opportunity, "availability")
-
-    if volunteer_availability and opportunity_availability:
-        factors["availability"] = availability_match(
-            volunteer_availability, opportunity_availability
-        )
-
-    volunteer_location = get_value(volunteer, "location")
-    opportunity_location = get_value(opportunity, "location")
-
-    if volunteer_location and opportunity_location:
-        factors["location"] = location_match(
-            volunteer_location, opportunity_location
-        )
-
-    volunteer_experience = get_value(volunteer, "experience")
-    required_experience = get_value(opportunity, "experience_required")
-
-    if volunteer_experience and required_experience:
-        factors["experience"] = experience_match(
-            volunteer_experience, required_experience
-        )
-
-    volunteer_mode = get_value(volunteer, "preferred_mode")
-    opportunity_mode = get_value(opportunity, "mode")
-
-    if volunteer_mode and opportunity_mode:
-        factors["mode"] = mode_match(
-            volunteer_mode, opportunity_mode
-        )
-
-    return factors
-
-
-def calculate_score(volunteer, opportunity):
-    """Calculate profile-based score out of 100."""
-
-    factors = get_profile_factors(volunteer, opportunity)
-
-    if not factors:
-        return 0
-
-    available_weight = sum(
-        PROFILE_WEIGHTS[key] for key in factors
-    )
-
-    if available_weight == 0:
-        return 0
-
-    score = sum(
-        factors[key] * PROFILE_WEIGHTS[key]
-        for key in factors
-    ) / available_weight
-
-    return round(score * 100, 2)
-
-
-def get_score_breakdown(volunteer, opportunity):
-    factors = get_profile_factors(volunteer, opportunity)
-
-    breakdown = {
-        key: round(value * 100, 2)
-        for key, value in factors.items()
-    }
-
-    breakdown["final_score"] = calculate_score(
-        volunteer, opportunity
-    )
-
-    return breakdown
-
-
-# =====================================================
-# NLP: TF-IDF AND COSINE SIMILARITY
-# =====================================================
-
-STOP_WORDS = {
-    "the", "a", "an", "and", "or", "is", "are",
-    "to", "of", "in", "on", "for", "with", "by",
-    "this", "that", "from", "will", "be", "as",
-    "at", "it", "we", "our", "you", "your"
+# Small synonym dictionary for related volunteer skills
+SYNONYMS = {
+    "teaching": {"education", "tutoring", "training"},
+    "education": {"teaching", "tutoring", "training"},
+    "tutoring": {"teaching", "education"},
+    "coding": {"programming", "software"},
+    "programming": {"coding", "software development"},
+    "healthcare": {"medical", "health", "medicine"},
+    "medical": {"healthcare", "health", "medicine"},
+    "environment": {"environmental", "nature", "conservation"},
+    "environmental": {"environment", "conservation"},
+    "fundraising": {"fundraising", "donations", "funding"},
+    "design": {"graphic design", "creative design"},
+    "communication": {"public speaking", "content writing"},
+    "writing": {"content writing", "content creation"}
 }
 
 
-def tokenize(text):
-    words = re.findall(r"[a-zA-Z0-9]+", normalize_text(text))
+# =========================================================
+# GENERAL HELPERS
+# =========================================================
+
+def get_value(data, *keys, default=""):
+    """Safely read values from dictionaries or database rows."""
+
+    if data is None:
+        return default
+
+    for key in keys:
+        try:
+            value = data[key]
+            if value is not None:
+                return value
+        except (KeyError, IndexError, TypeError):
+            continue
+
+    return default
+
+
+def normalize_text(value):
+    if value is None:
+        return ""
+
+    return re.sub(r"\s+", " ", str(value).lower()).strip()
+
+
+def make_list(value):
+    """Convert comma-separated strings or lists into normalized lists."""
+
+    if value is None:
+        return []
+
+    if isinstance(value, (list, tuple, set)):
+        items = value
+    else:
+        items = re.split(r"[,;|\n]", str(value))
 
     return [
-        word for word in words
-        if len(word) > 1 and word not in STOP_WORDS
+        normalize_text(item)
+        for item in items
+        if normalize_text(item)
     ]
 
 
+def tokenize(text):
+    """Extract meaningful words from text."""
+
+    text = normalize_text(text)
+
+    return re.findall(r"[a-z0-9]+", text)
+
+
+def canonical_skill(skill):
+    """Normalize common related skill names."""
+
+    skill = normalize_text(skill)
+
+    for main_skill, related_skills in SYNONYMS.items():
+        if skill == main_skill or skill in related_skills:
+            return main_skill
+
+    return skill
+
+
+def similarity_between_items(first, second):
+    first = canonical_skill(first)
+    second = canonical_skill(second)
+
+    if first == second:
+        return 1.0
+
+    first_tokens = set(tokenize(first))
+    second_tokens = set(tokenize(second))
+
+    if not first_tokens or not second_tokens:
+        return 0.0
+
+    intersection = first_tokens.intersection(second_tokens)
+
+    return len(intersection) / len(first_tokens.union(second_tokens))
+
+
+# =========================================================
+# PROFILE MATCHING
+# =========================================================
+
+def skill_match(volunteer_skills, required_skills):
+
+    volunteer_skills = make_list(volunteer_skills)
+    required_skills = make_list(required_skills)
+
+    if not volunteer_skills or not required_skills:
+        return None
+
+    matched = 0
+
+    for required in required_skills:
+
+        best_match = max(
+            (
+                similarity_between_items(volunteer, required)
+                for volunteer in volunteer_skills
+            ),
+            default=0
+        )
+
+        if best_match >= 0.5:
+            matched += 1
+
+    return matched / len(required_skills)
+
+
+def interest_match(volunteer_interests, opportunity):
+
+    interests = make_list(volunteer_interests)
+
+    opportunity_text = normalize_text(
+        " ".join([
+            str(get_value(opportunity, "cause")),
+            str(get_value(opportunity, "title")),
+            str(get_value(opportunity, "description"))
+        ])
+    )
+
+    if not interests or not opportunity_text:
+        return None
+
+    matches = 0
+
+    for interest in interests:
+
+        interest_tokens = set(tokenize(interest))
+        opportunity_tokens = set(tokenize(opportunity_text))
+
+        if interest_tokens and interest_tokens.intersection(opportunity_tokens):
+            matches += 1
+
+    return matches / len(interests)
+
+
+def location_match(volunteer_location, opportunity_location):
+
+    volunteer_location = normalize_text(volunteer_location)
+    opportunity_location = normalize_text(opportunity_location)
+
+    if not volunteer_location or not opportunity_location:
+        return None
+
+    remote_terms = {"remote", "online", "virtual"}
+
+    if (
+        volunteer_location in remote_terms
+        or opportunity_location in remote_terms
+    ):
+        return 1.0
+
+    if volunteer_location == opportunity_location:
+        return 1.0
+
+    return 0.0
+
+
+def availability_match(volunteer_availability, opportunity_availability):
+
+    volunteer_days = set(make_list(volunteer_availability))
+    opportunity_days = set(make_list(opportunity_availability))
+
+    if not volunteer_days or not opportunity_days:
+        return None
+
+    if "flexible" in volunteer_days or "anytime" in volunteer_days:
+        return 1.0
+
+    overlap = volunteer_days.intersection(opportunity_days)
+
+    return len(overlap) / len(opportunity_days)
+
+
+def experience_match(volunteer_experience, required_experience):
+
+    volunteer_experience = normalize_text(volunteer_experience)
+    required_experience = normalize_text(required_experience)
+
+    if not volunteer_experience or not required_experience:
+        return None
+
+    volunteer_level = EXPERIENCE_LEVELS.get(volunteer_experience)
+    required_level = EXPERIENCE_LEVELS.get(required_experience)
+
+    if volunteer_level is None or required_level is None:
+        return None
+
+    if volunteer_level >= required_level:
+        return 1.0
+
+    return volunteer_level / required_level
+
+
+def mode_match(volunteer_mode, opportunity_mode):
+
+    volunteer_mode = normalize_text(volunteer_mode)
+    opportunity_mode = normalize_text(opportunity_mode)
+
+    if not volunteer_mode or not opportunity_mode:
+        return None
+
+    if volunteer_mode == opportunity_mode:
+        return 1.0
+
+    if "hybrid" in (volunteer_mode, opportunity_mode):
+        return 1.0
+
+    return 0.0
+
+
+# =========================================================
+# PROFILE SCORE
+# =========================================================
+
+def calculate_profile_score(volunteer, opportunity):
+
+    results = {
+        "skills": skill_match(
+            get_value(volunteer, "skills"),
+            get_value(opportunity, "required_skills", "skills")
+        ),
+
+        "interests": interest_match(
+            get_value(volunteer, "interests"),
+            opportunity
+        ),
+
+        "availability": availability_match(
+            get_value(volunteer, "availability"),
+            get_value(opportunity, "availability")
+        ),
+
+        "location": location_match(
+            get_value(volunteer, "location"),
+            get_value(opportunity, "location")
+        ),
+
+        "experience": experience_match(
+            get_value(volunteer, "experience"),
+            get_value(opportunity, "experience_required", "required_experience")
+        ),
+
+        "mode": mode_match(
+            get_value(volunteer, "preferred_mode"),
+            get_value(opportunity, "mode")
+        )
+    }
+
+    weighted_score = 0
+    total_weight = 0
+
+    for factor, score in results.items():
+
+        if score is not None:
+
+            weight = PROFILE_WEIGHTS[factor]
+
+            weighted_score += score * weight
+            total_weight += weight
+
+    if total_weight == 0:
+        return 0.0, results
+
+    final_score = weighted_score / total_weight
+
+    return round(final_score * 100, 2), results
+
+
+# =========================================================
+# NLP: TF-IDF AND COSINE SIMILARITY
+# =========================================================
+
 def build_volunteer_document(volunteer):
+
     fields = [
         get_value(volunteer, "skills"),
         get_value(volunteer, "interests"),
         get_value(volunteer, "experience"),
+        get_value(volunteer, "location"),
         get_value(volunteer, "preferred_mode"),
-        get_value(volunteer, "location")
+        get_value(volunteer, "availability")
     ]
 
-    return " ".join(str(value) for value in fields if value)
+    return " ".join(str(field) for field in fields if field)
 
 
 def build_opportunity_document(opportunity):
+
     fields = [
         get_value(opportunity, "title"),
         get_value(opportunity, "description"),
         get_value(opportunity, "cause"),
-        get_value(opportunity, "required_skills"),
+        get_value(opportunity, "required_skills", "skills"),
         get_value(opportunity, "location"),
         get_value(opportunity, "mode"),
-        get_value(opportunity, "experience_required")
+        get_value(opportunity, "experience_required", "required_experience")
     ]
 
-    return " ".join(str(value) for value in fields if value)
+    return " ".join(str(field) for field in fields if field)
 
 
-def tfidf_vector(tokens, document_frequency, total_documents):
-    counts = Counter(tokens)
-    total_words = len(tokens)
+def tfidf_similarity(volunteer_document, opportunity_documents):
 
-    if total_words == 0:
-        return {}
+    volunteer_tokens = tokenize(volunteer_document)
 
-    vector = {}
+    if not volunteer_tokens:
+        return [0.0] * len(opportunity_documents)
 
-    for word, count in counts.items():
-        tf = count / total_words
+    opportunity_tokens = [
+        tokenize(document)
+        for document in opportunity_documents
+    ]
 
-        idf = math.log(
-            (1 + total_documents) /
-            (1 + document_frequency[word])
-        ) + 1
+    all_documents = [volunteer_tokens] + opportunity_tokens
 
-        vector[word] = tf * idf
-
-    return vector
-
-
-def cosine_similarity(vector_a, vector_b):
-    if not vector_a or not vector_b:
-        return 0
-
-    common_words = set(vector_a) & set(vector_b)
-
-    dot_product = sum(
-        vector_a[word] * vector_b[word]
-        for word in common_words
-    )
-
-    magnitude_a = math.sqrt(
-        sum(value ** 2 for value in vector_a.values())
-    )
-
-    magnitude_b = math.sqrt(
-        sum(value ** 2 for value in vector_b.values())
-    )
-
-    if magnitude_a == 0 or magnitude_b == 0:
-        return 0
-
-    return dot_product / (magnitude_a * magnitude_b)
-
-
-def calculate_text_similarity(volunteer, opportunity):
-    volunteer_text = tokenize(
-        build_volunteer_document(volunteer)
-    )
-
-    opportunity_text = tokenize(
-        build_opportunity_document(opportunity)
-    )
-
-    if not volunteer_text or not opportunity_text:
-        return 0
-
-    documents = [volunteer_text, opportunity_text]
+    document_count = len(all_documents)
 
     document_frequency = Counter()
 
-    for document in documents:
+    for document in all_documents:
         document_frequency.update(set(document))
 
-    volunteer_vector = tfidf_vector(
-        volunteer_text, document_frequency, len(documents)
+    def calculate_vector(tokens):
+
+        word_counts = Counter(tokens)
+        total_words = len(tokens)
+
+        vector = {}
+
+        if total_words == 0:
+            return vector
+
+        for word, count in word_counts.items():
+
+            tf = count / total_words
+
+            idf = math.log(
+                (document_count + 1) /
+                (document_frequency[word] + 1)
+            ) + 1
+
+            vector[word] = tf * idf
+
+        return vector
+
+    volunteer_vector = calculate_vector(volunteer_tokens)
+
+    opportunity_vectors = [
+        calculate_vector(tokens)
+        for tokens in opportunity_tokens
+    ]
+
+    def cosine_similarity(first, second):
+
+        if not first or not second:
+            return 0.0
+
+        common_words = set(first).intersection(second)
+
+        dot_product = sum(
+            first[word] * second[word]
+            for word in common_words
+        )
+
+        first_magnitude = math.sqrt(
+            sum(value ** 2 for value in first.values())
+        )
+
+        second_magnitude = math.sqrt(
+            sum(value ** 2 for value in second.values())
+        )
+
+        if first_magnitude == 0 or second_magnitude == 0:
+            return 0.0
+
+        return dot_product / (
+            first_magnitude * second_magnitude
+        )
+
+    return [
+        round(
+            cosine_similarity(volunteer_vector, vector) * 100,
+            2
+        )
+        for vector in opportunity_vectors
+    ]
+
+
+# =========================================================
+# HYBRID SCORE
+# =========================================================
+
+def calculate_score(volunteer, opportunity):
+
+    profile_score, breakdown = calculate_profile_score(
+        volunteer,
+        opportunity
     )
 
-    opportunity_vector = tfidf_vector(
-        opportunity_text, document_frequency, len(documents)
+    volunteer_document = build_volunteer_document(volunteer)
+    opportunity_document = build_opportunity_document(opportunity)
+
+    text_score = tfidf_similarity(
+        volunteer_document,
+        [opportunity_document]
+    )[0]
+
+    # If there is no usable profile information,
+    # rely on the NLP similarity score.
+    if not any(value is not None for value in breakdown.values()):
+        final_score = text_score
+
+    elif not volunteer_document.strip():
+        final_score = profile_score
+
+    else:
+        final_score = (
+            profile_score * PROFILE_WEIGHT
+            + text_score * TEXT_WEIGHT
+        )
+
+    return round(min(max(final_score, 0), 100), 2)
+
+
+def get_score_breakdown(volunteer, opportunity):
+
+    profile_score, breakdown = calculate_profile_score(
+        volunteer,
+        opportunity
     )
 
-    similarity = cosine_similarity(
-        volunteer_vector, opportunity_vector
-    )
+    volunteer_document = build_volunteer_document(volunteer)
+    opportunity_document = build_opportunity_document(opportunity)
 
-    return round(similarity * 100, 2)
+    text_score = tfidf_similarity(
+        volunteer_document,
+        [opportunity_document]
+    )[0]
+
+    final_score = calculate_score(volunteer, opportunity)
+
+    return {
+        "profile_score": profile_score,
+        "text_similarity": text_score,
+        "skills": breakdown["skills"],
+        "interests": breakdown["interests"],
+        "availability": breakdown["availability"],
+        "location": breakdown["location"],
+        "experience": breakdown["experience"],
+        "mode": breakdown["mode"],
+        "final_score": final_score
+    }
 
 
-# =====================================================
+# =========================================================
 # RECOMMENDATION EXPLANATIONS
-# =====================================================
+# =========================================================
 
 def get_recommendation_reasons(volunteer, opportunity):
+
     reasons = []
-    factors = get_profile_factors(volunteer, opportunity)
 
-    if factors.get("skills", 0) > 0:
-        reasons.append("Your skills match this opportunity")
+    volunteer_skills = make_list(
+        get_value(volunteer, "skills")
+    )
 
-    if factors.get("interests", 0) > 0:
-        reasons.append("Matches your interests")
+    required_skills = make_list(
+        get_value(opportunity, "required_skills", "skills")
+    )
 
-    if factors.get("availability", 0) > 0:
-        reasons.append("Your availability matches")
+    for required in required_skills:
 
-    if factors.get("location", 0) > 0:
+        if any(
+            similarity_between_items(skill, required) >= 0.5
+            for skill in volunteer_skills
+        ):
+            reasons.append(
+                "Your skills match: " + required
+            )
+
+    interests = make_list(
+        get_value(volunteer, "interests")
+    )
+
+    cause = normalize_text(
+        get_value(opportunity, "cause")
+    )
+
+    if cause and any(
+        interest in cause or cause in interest
+        for interest in interests
+    ):
+        reasons.append(
+            "Matches your interest in " + cause
+        )
+
+    location = location_match(
+        get_value(volunteer, "location"),
+        get_value(opportunity, "location")
+    )
+
+    if location == 1.0:
         reasons.append("Suitable location")
 
-    if factors.get("experience", 0) > 0:
-        reasons.append("Your experience is suitable")
+    mode = mode_match(
+        get_value(volunteer, "preferred_mode"),
+        get_value(opportunity, "mode")
+    )
 
-    if factors.get("mode", 0) > 0:
+    if mode == 1.0:
         reasons.append("Matches your preferred work mode")
 
     if not reasons:
-        reasons.append("Related profile and opportunity information")
+        reasons.append(
+            "Recommended based on your overall profile and opportunity description"
+        )
 
     return reasons
 
 
-# =====================================================
-# HYBRID RECOMMENDATION SYSTEM
-# =====================================================
+# =========================================================
+# FINAL RANKING FUNCTION
+# =========================================================
 
 def rank_opportunities(
     volunteer,
@@ -419,83 +586,121 @@ def rank_opportunities(
     top_n=5,
     exclude_ids=None
 ):
-    """
-    Hybrid recommendation:
-    60% profile matching
-    40% TF-IDF text similarity
 
-    Returns flat dictionaries compatible with the dashboard.
-    """
+    exclude_ids = {
+        str(item) for item in (exclude_ids or [])
+    }
 
-    exclude_ids = set(exclude_ids or [])
-    ranked = []
+    eligible_opportunities = []
 
     for opportunity in opportunities:
 
-        opportunity_data = dict(opportunity)
-
         opportunity_id = get_value(
-            opportunity_data, "opportunity_id"
+            opportunity,
+            "opportunity_id",
+            "id"
         )
 
-        # Skip opportunities already applied to
-        if opportunity_id in exclude_ids:
-            continue
+        if opportunity_id is not None:
+            if str(opportunity_id) in exclude_ids:
+                continue
 
-        profile_score = calculate_score(
-            volunteer, opportunity_data
+        eligible_opportunities.append(opportunity)
+
+    if not eligible_opportunities:
+        return []
+
+    volunteer_document = build_volunteer_document(volunteer)
+
+    opportunity_documents = [
+        build_opportunity_document(opportunity)
+        for opportunity in eligible_opportunities
+    ]
+
+    text_scores = tfidf_similarity(
+        volunteer_document,
+        opportunity_documents
+    )
+
+    recommendations = []
+
+    for index, opportunity in enumerate(eligible_opportunities):
+
+        profile_score, breakdown = calculate_profile_score(
+            volunteer,
+            opportunity
         )
 
-        text_score = calculate_text_similarity(
-            volunteer, opportunity_data
-        )
+        text_score = text_scores[index]
 
-        # If profile information is missing, use text matching.
-        # If text information is missing, use profile matching.
-        has_profile = bool(get_profile_factors(
-            volunteer, opportunity_data
-        ))
-
-        has_text = bool(
-            tokenize(build_volunteer_document(volunteer))
-            and tokenize(build_opportunity_document(opportunity_data))
-        )
-
-        if has_profile and has_text:
-            final_score = (
-                0.60 * profile_score +
-                0.40 * text_score
-            )
-        elif has_profile:
-            final_score = profile_score
-        elif has_text:
+        if not any(value is not None for value in breakdown.values()):
             final_score = text_score
+
+        elif not volunteer_document.strip():
+            final_score = profile_score
+
         else:
-            final_score = 0
-
-        reasons = get_recommendation_reasons(
-            volunteer, opportunity_data
-        )
-
-        if text_score >= 15:
-            reasons.append(
-                "Your profile is textually similar to this opportunity"
+            final_score = (
+                profile_score * PROFILE_WEIGHT
+                + text_score * TEXT_WEIGHT
             )
 
-        # Flat structure: compatible with volunteer_dashboard.html
-        opportunity_data["score"] = round(final_score, 2)
-        opportunity_data["profile_score"] = profile_score
-        opportunity_data["text_score"] = text_score
-        opportunity_data["reasons"] = reasons
+        final_score = round(
+            min(max(final_score, 0), 100),
+            2
+        )
 
-        ranked.append(opportunity_data)
+        # Preserve all original opportunity fields.
+        try:
+            result = dict(opportunity)
+        except (TypeError, ValueError):
+            result = {}
 
-    ranked.sort(
+            for key in (
+                "opportunity_id",
+                "title",
+                "cause",
+                "ngo_name",
+                "location",
+                "mode",
+                "hours_required",
+                "description",
+                "required_skills"
+            ):
+                value = get_value(opportunity, key, default=None)
+
+                if value is not None:
+                    result[key] = value
+
+        result["score"] = final_score
+        result["match_score"] = final_score
+
+        result["score_breakdown"] = {
+            "profile_score": profile_score,
+            "text_similarity": text_score,
+            "skills": breakdown["skills"],
+            "interests": breakdown["interests"],
+            "availability": breakdown["availability"],
+            "location": breakdown["location"],
+            "experience": breakdown["experience"],
+            "mode": breakdown["mode"]
+        }
+
+        result["recommendation_reasons"] = (
+            get_recommendation_reasons(
+                volunteer,
+                opportunity
+            )
+        )
+
+        recommendations.append(result)
+
+    recommendations.sort(
         key=lambda item: item["score"],
         reverse=True
     )
 
-    if top_n is None:
-        return ranked
+    if top_n is not None:
+        recommendations = recommendations[:top_n]
 
-    return ranked[:top_n]
+    return recommendations
