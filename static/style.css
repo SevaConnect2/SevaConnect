@@ -1795,3 +1795,300 @@ footer .copyright {
         width: 100%;
     }
 }
+
+
+/* =========================================
+   SEVACONNECT VOLUNTEER DASHBOARD
+   ========================================= */
+
+/* Main page */
+.volunteer-dashboard {
+    min-height: 100vh;
+    margin: 0;
+    background: #f4f7f6;
+    color: #1f2937;
+    font-family: "Poppins", Arial, sans-serif;
+}
+
+/* Navigation */
+.volunteer-dashboard header {
+    width: 100%;
+    min-height: 76px;
+    padding: 14px 7%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 3px 15px rgba(15, 23, 42, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.volunteer-dashboard header h1 {
+    margin: 0;
+    color: #15803d;
+    font-size: 27px;
+    font-weight: 800;
+}
+
+.volunteer-dashboard header nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 25px;
+}
+
+.volunteer-dashboard header nav a {
+    color: #475569;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.volunteer-dashboard header nav a:hover {
+    color: #16a34a;
+}
+
+/* Main content */
+.volunteer-dashboard .container {
+    width: 86%;
+    max-width: 1250px;
+    margin: 40px auto;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.volunteer-dashboard .welcome-section {
+    margin-bottom: 38px;
+}
+
+.volunteer-dashboard .welcome-section h2 {
+    color: #172554;
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.volunteer-dashboard .welcome-section p {
+    color: #64748b;
+    font-size: 15px;
+}
+
+/* Recommendations */
+.volunteer-dashboard .recommendations-section > h2 {
+    color: #172554;
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.volunteer-dashboard .section-description {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+/* Opportunity cards */
+.volunteer-dashboard .recommendation-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, 0.045);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.volunteer-dashboard .recommendation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.09);
+}
+
+.volunteer-dashboard .recommendation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.volunteer-dashboard .opportunity-title h3 {
+    color: #172554;
+    font-size: 21px;
+    margin-bottom: 7px;
+}
+
+.volunteer-dashboard .cause {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Match score */
+.volunteer-dashboard .score-container {
+    text-align: right;
+}
+
+.volunteer-dashboard .match-score {
+    display: block;
+    color: #15803d;
+    font-size: 27px;
+    font-weight: 800;
+}
+
+.volunteer-dashboard .match-label {
+    color: #64748b;
+    font-size: 12px;
+}
+
+/* Progress bar */
+.volunteer-dashboard .progress-track {
+    width: 100%;
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 18px 0;
+}
+
+.volunteer-dashboard .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+    border-radius: 20px;
+}
+
+/* Opportunity details */
+.volunteer-dashboard .opportunity-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 22px;
+    margin: 18px 0;
+}
+
+.volunteer-dashboard .detail-item {
+    color: #475569;
+    font-size: 13px;
+}
+
+.volunteer-dashboard .description {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.8;
+    margin: 16px 0;
+}
+
+/* Match reasons */
+.volunteer-dashboard .match-reasons {
+    background: #f0fdf4;
+    border: 1px solid #dcfce7;
+    border-radius: 12px;
+    padding: 19px 22px;
+    margin: 20px 0;
+}
+
+.volunteer-dashboard .match-reasons h4 {
+    color: #166534;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.volunteer-dashboard .match-reasons ul {
+    padding-left: 20px;
+}
+
+.volunteer-dashboard .match-reasons li {
+    color: #475569;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+/* Apply button */
+.volunteer-dashboard .apply-button {
+    display: inline-block;
+    padding: 12px 25px;
+    background: #15803d;
+    color: #ffffff;
+    text-decoration: none;
+    text-align: center;
+    border: none;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: 0.2s ease;
+}
+
+.volunteer-dashboard .apply-button:hover {
+    background: #166534;
+    transform: translateY(-2px);
+}
+
+/* Empty recommendations */
+.volunteer-dashboard .empty-recommendations {
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 45px 25px;
+    text-align: center;
+}
+
+.volunteer-dashboard .empty-recommendations h3 {
+    color: #172554;
+    margin-bottom: 10px;
+}
+
+.volunteer-dashboard .empty-recommendations p {
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .volunteer-dashboard header {
+        padding: 18px 5%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .volunteer-dashboard header nav {
+        gap: 15px;
+    }
+
+    .volunteer-dashboard .container {
+        width: 90%;
+        margin: 25px auto;
+    }
+
+    .volunteer-dashboard .welcome-section h2 {
+        font-size: 25px;
+    }
+
+    .volunteer-dashboard .recommendation-card {
+        padding: 21px;
+    }
+
+    .volunteer-dashboard .score-container {
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .volunteer-dashboard header nav {
+        gap: 12px;
+    }
+
+    .volunteer-dashboard header nav a {
+        font-size: 12px;
+    }
+
+    .volunteer-dashboard .recommendations-section > h2 {
+        font-size: 23px;
+    }
+}

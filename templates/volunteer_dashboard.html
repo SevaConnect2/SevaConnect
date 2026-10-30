@@ -1,408 +1,516 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Volunteer Dashboard | SevaConnect</title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Poppins", Arial, sans-serif;
+            background: #f4f7f6;
+            color: #1f2937;
+            min-height: 100vh;
+        }
+
+        /* NAVIGATION */
+
+        header {
+            width: 100%;
+            min-height: 76px;
+            padding: 14px 7%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 3px 15px rgba(15, 23, 42, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-size: 27px;
+            font-weight: 800;
+            color: #15803d;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: #475569;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        nav a:hover {
+            color: #16a34a;
+        }
+
+        /* MAIN DASHBOARD */
+
+        .container {
+            width: 86%;
+            max-width: 1250px;
+            margin: 40px auto;
+        }
+
+        .welcome-section {
+            margin-bottom: 38px;
+        }
+
+        .welcome-section h2 {
+            font-size: 30px;
+            color: #172554;
+            margin-bottom: 8px;
+        }
+
+        .welcome-section p {
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        /* RECOMMENDATION SECTION */
+
+        .recommendations-section > h2 {
+            font-size: 28px;
+            color: #172554;
+            margin-bottom: 8px;
+        }
+
+        .section-description {
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        /* OPPORTUNITY CARD */
+
+        .recommendation-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 5px 20px rgba(15, 23, 42, 0.045);
+            transition: 0.25s ease;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.09);
+        }
+
+        .recommendation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .opportunity-title h3 {
+            font-size: 21px;
+            color: #172554;
+            margin-bottom: 7px;
+        }
+
+        .cause {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* MATCH SCORE */
+
+        .score-container {
+            text-align: right;
+            min-width: 100px;
+        }
+
+        .match-score {
+            display: block;
+            font-size: 27px;
+            font-weight: 800;
+            color: #15803d;
+        }
+
+        .match-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* PROGRESS BAR */
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 18px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #16a34a, #4ade80);
+            border-radius: 20px;
+        }
+
+        /* OPPORTUNITY DETAILS */
+
+        .opportunity-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 22px;
+            margin: 18px 0;
+        }
+
+        .detail-item {
+            color: #475569;
+            font-size: 13px;
+        }
+
+        .description {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.8;
+            margin: 16px 0;
+        }
+
+        /* MATCH REASONS */
+
+        .match-reasons {
+            background: #f0fdf4;
+            border: 1px solid #dcfce7;
+            border-radius: 12px;
+            padding: 19px 22px;
+            margin: 20px 0;
+        }
+
+        .match-reasons h4 {
+            color: #166534;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .match-reasons ul {
+            padding-left: 20px;
+        }
+
+        .match-reasons li {
+            color: #475569;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .no-reasons {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        /* APPLY BUTTON */
+
+        .apply-button {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #15803d;
+            color: #ffffff;
+            text-decoration: none;
+            text-align: center;
+            border: none;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+
+        .apply-button:hover {
+            background: #166534;
+            transform: translateY(-2px);
+        }
+
+        /* EMPTY STATE */
+
+        .empty-recommendations {
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 45px 25px;
+            text-align: center;
+        }
+
+        .empty-recommendations h3 {
+            color: #172554;
+            margin-bottom: 10px;
+        }
+
+        .empty-recommendations p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        /* RESPONSIVE DESIGN */
+
+        @media (max-width: 768px) {
+            header {
+                padding: 18px 5%;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            nav {
+                gap: 15px;
+            }
+
+            .container {
+                width: 90%;
+                margin: 25px auto;
+            }
+
+            .welcome-section h2 {
+                font-size: 25px;
+            }
+
+            .recommendation-card {
+                padding: 21px;
+            }
+
+            .score-container {
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                gap: 12px;
+            }
+
+            nav a {
+                font-size: 12px;
+            }
+
+            .recommendations-section > h2 {
+                font-size: 23px;
+            }
+
+            .opportunity-details {
+                gap: 10px;
+            }
+        }
+    </style>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
+<body class="volunteer-dashboard">
 
-<nav class="navbar">
-    <div class="logo">
-        <span class="logo-icon">🤝</span>
-        <span>SevaConnect</span>
-    </div>
+    <!-- NAVIGATION -->
+    <header>
+        <h1>SevaConnect</h1>
 
-    <div class="nav-links">
-        <a href="{{ url_for('volunteer_dashboard') }}" class="active">
-            Dashboard
-        </a>
+        <nav>
+            <a href="{{ url_for('volunteer_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('volunteer_profile') }}">My Profile</a>
+            <a href="{{ url_for('volunteer_history') }}">My Applications</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
 
-        <a href="{{ url_for('volunteer_profile') }}">
-            My Profile
-        </a>
+    <!-- DASHBOARD -->
+    <main class="container">
 
-        <a href="{{ url_for('volunteer_history') }}">
-            📋 My Activity History
-        </a>
-
-        <a href="{{ url_for('logout') }}">
-            Logout
-        </a>
-    </div>
-</nav>
-
-
-<main class="dashboard-container">
-
-    <!-- WELCOME -->
-    <section class="dashboard-header">
-        <div>
-            <h1>
+        <section class="welcome-section">
+            <h2>
                 Welcome, {{ session.get("name", "Volunteer") }} 👋
-            </h1>
+            </h2>
 
             <p>
-                Discover meaningful opportunities and make an impact
-                with SevaConnect.
+                Discover volunteering opportunities that match your skills and interests.
             </p>
-        </div>
+        </section>
 
-        <a href="{{ url_for('volunteer_profile') }}"
-           class="primary-button">
-            Edit Profile
-        </a>
-    </section>
+        <!-- RECOMMENDATIONS -->
+        <section class="recommendations-section">
 
+            <h2>Recommended Opportunities</h2>
 
-    <!-- STATISTICS -->
-    <section class="stats-grid">
+            <p class="section-description">
+                These opportunities are ranked using your profile and the opportunity requirements.
+            </p>
 
-        <div class="stat-card">
-            <div class="stat-icon">🎯</div>
-            <div class="stat-number">
-                {{ recommendations|length }}
-            </div>
-            <div class="stat-label">Recommendations</div>
-        </div>
+            {% if recommendations %}
 
-        <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-number">
-                {{ applications|length }}
-            </div>
-            <div class="stat-label">Applications</div>
-        </div>
+                {% for opportunity in recommendations %}
 
-        <div class="stat-card">
-            <div class="stat-icon">🤝</div>
-            <div class="stat-number">
-                {{ completed_activities|default(0) }}
-            </div>
-            <div class="stat-label">Completed Activities</div>
-        </div>
+                    {% set score = opportunity.score|default(opportunity.match_score|default(0), true)|float %}
 
-        <div class="stat-card">
-            <div class="stat-icon">⭐</div>
-            <div class="stat-number">
-                {% if profile %}✓{% else %}!{% endif %}
-            </div>
-            <div class="stat-label">
-                {% if profile %}
-                    Profile Saved
-                {% else %}
-                    Complete Profile
-                {% endif %}
-            </div>
-        </div>
+                    <article class="recommendation-card">
 
-    </section>
+                        <div class="recommendation-header">
 
+                            <div class="opportunity-title">
 
-    <!-- RECOMMENDATIONS -->
-    <section class="dashboard-section">
+                                <h3>{{ opportunity.title }}</h3>
 
-        <div class="section-heading">
-            <div>
-                <h2>Recommended Opportunities</h2>
-                <p>
-                    Opportunities matched to your skills, interests
-                    and preferences.
-                </p>
-            </div>
-        </div>
+                                {% if opportunity.cause %}
+                                    <span class="cause">
+                                        {{ opportunity.cause }}
+                                    </span>
+                                {% endif %}
 
+                            </div>
 
-        {% if recommendations %}
+                            <div class="score-container">
 
-        <div class="opportunity-grid">
+                                <span class="match-score">
+                                    {{ "%.1f"|format(score) }}%
+                                </span>
 
-            {% for opportunity in recommendations %}
+                                <span class="match-label">
+                                    Match score
+                                </span>
 
-            <div class="opportunity-card">
+                            </div>
 
-                <div class="opportunity-top">
+                        </div>
 
-                    <span class="cause-badge">
-                        {{ opportunity.get("cause", "General") }}
-                    </span>
+                        <!-- PROGRESS BAR -->
+                        <div class="progress-track">
 
-                    {% if opportunity.get("score") is not none %}
+                            <div
+                                class="progress-fill"
+                                style="width: {{ [100, [0, score]|max]|min }}%;">
+                            </div>
 
-                    <span class="score-badge">
-                        {{ "%.1f"|format(opportunity.get("score")|float) }}% Match
-                    </span>
+                        </div>
 
-                    {% else %}
+                        <!-- DETAILS -->
+                        <div class="opportunity-details">
 
-                    <span class="score-badge">
-                        Profile Needed
-                    </span>
+                            {% if opportunity.location %}
+                                <span class="detail-item">
+                                    📍 {{ opportunity.location }}
+                                </span>
+                            {% endif %}
 
-                    {% endif %}
+                            {% if opportunity.mode %}
+                                <span class="detail-item">
+                                    💻 {{ opportunity.mode }}
+                                </span>
+                            {% endif %}
 
-                </div>
+                            {% if opportunity.availability %}
+                                <span class="detail-item">
+                                    📅 {{ opportunity.availability }}
+                                </span>
+                            {% endif %}
 
+                            {% if opportunity.hours_required %}
+                                <span class="detail-item">
+                                    ⏱️ {{ opportunity.hours_required }} hours
+                                </span>
+                            {% endif %}
 
-                <h3>
-                    {{ opportunity.get("title", "Volunteer Opportunity") }}
-                </h3>
+                            {% if opportunity.ngo_name %}
+                                <span class="detail-item">
+                                    🏢 {{ opportunity.ngo_name }}
+                                </span>
+                            {% endif %}
 
+                        </div>
 
-                <p class="ngo-name">
-                    🏢
-                    {{ opportunity.get("ngo_name") or "Organization" }}
-                </p>
+                        <!-- DESCRIPTION -->
+                        {% if opportunity.description %}
+                            <p class="description">
+                                {{ opportunity.description }}
+                            </p>
+                        {% endif %}
 
+                        <!-- MATCH EXPLANATION -->
+                        <div class="match-reasons">
 
-                <div class="opportunity-details">
+                            <h4>
+                                Why this opportunity matches you
+                            </h4>
 
-                    <span>
-                        📍 {{ opportunity.get("location") or "Not specified" }}
-                    </span>
+                            {% if opportunity.recommendation_reasons %}
 
-                    <span>
-                        💻 {{ opportunity.get("mode") or "Not specified" }}
-                    </span>
+                                <ul>
+                                    {% for reason in opportunity.recommendation_reasons %}
+                                        <li>{{ reason }}</li>
+                                    {% endfor %}
+                                </ul>
 
-                    <span>
-                        ⏰ {{ opportunity.get("hours_required") or "Not specified" }} hrs
-                    </span>
+                            {% else %}
 
-                </div>
+                                <p class="no-reasons">
+                                    This opportunity was recommended based on your volunteer profile.
+                                </p>
 
+                            {% endif %}
 
-                {% if opportunity.get("score") is none %}
+                        </div>
 
-                    {% if not profile %}
+                        <!-- APPLY -->
+                        <a
+                            href="{{ url_for('apply_opportunity', opportunity_id=opportunity.opportunity_id) }}"
+                            class="apply-button">
+                            Apply Now →
+                        </a>
+
+                    </article>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="empty-recommendations">
+
+                    <h3>No recommendations available yet</h3>
+
                     <p>
-                        Complete your volunteer profile to receive
-                        personalized match percentages.
-                    </p>
-                    {% endif %}
-
-                {% endif %}
-
-
-                <!-- APPLY BUTTON -->
-                <form
-                    action="{{ url_for(
-                        'apply_opportunity',
-                        opportunity_id=opportunity['opportunity_id']
-                    ) }}"
-                    method="POST">
-
-                    <button type="submit" class="view-btn">
-                        Apply Now
-                    </button>
-
-                </form>
-
-            </div>
-
-            {% endfor %}
-
-        </div>
-
-        {% else %}
-
-        <div class="empty-state">
-            <div class="empty-icon">🔍</div>
-
-            <h3>No recommendations yet</h3>
-
-            <p>
-                Complete your profile to receive personalized
-                volunteer opportunities.
-            </p>
-
-            <a href="{{ url_for('volunteer_profile') }}"
-               class="primary-button">
-                Complete Profile
-            </a>
-        </div>
-
-        {% endif %}
-
-    </section>
-
-
-    <!-- MY APPLICATIONS -->
-    <section class="dashboard-section">
-
-        <div class="section-heading">
-            <div>
-                <h2>My Applications</h2>
-                <p>
-                    Track the opportunities you have applied for.
-                </p>
-            </div>
-        </div>
-
-
-        {% if applications %}
-
-        <div class="applications-list">
-
-            {% for application in applications %}
-
-            <div class="application-card">
-
-                <div class="application-info">
-
-                    <h3>
-                        {{ application["opportunity_title"] }}
-                    </h3>
-
-                    <p class="application-ngo">
-                        🏢
-                        {{ application["ngo_name"] or "Organization" }}
+                        Complete your volunteer profile with your skills, interests and availability to receive recommendations.
                     </p>
 
-                    <div class="application-meta">
-
-                        <span>
-                            ❤️ {{ application["cause"] }}
-                        </span>
-
-                        <span>
-                            📅 Applied: {{ application["applied_at"] }}
-                        </span>
-
-                    </div>
+                    <a
+                        href="{{ url_for('volunteer_profile') }}"
+                        class="apply-button">
+                        Complete Profile
+                    </a>
 
                 </div>
 
+            {% endif %}
 
-                <div class="application-status">
+        </section>
 
-                    {% if application["status"] == "Accepted" %}
-
-                        <span class="status-badge accepted">
-                            ✓ Accepted
-                        </span>
-
-                    {% elif application["status"] == "Rejected" %}
-
-                        <span class="status-badge rejected">
-                            ✕ Rejected
-                        </span>
-
-                    {% elif application["status"] == "Completed" %}
-
-                        <span class="status-badge accepted">
-                            ✓ Completed
-                        </span>
-
-                    {% else %}
-
-                        <span class="status-badge pending">
-                            ⏳ Pending
-                        </span>
-
-                    {% endif %}
-
-                </div>
-
-            </div>
-
-            {% endfor %}
-
-        </div>
-
-        {% else %}
-
-        <div class="empty-state">
-            <div class="empty-icon">📋</div>
-
-            <h3>No applications yet</h3>
-
-            <p>
-                When you apply for an opportunity, it will appear here.
-            </p>
-        </div>
-
-        {% endif %}
-
-    </section>
-
-
-    <!-- ACTIVITY HISTORY -->
-    <section class="dashboard-section">
-
-        <div class="section-heading">
-            <div>
-                <h2>My Volunteer Journey</h2>
-
-                <p>
-                    Review activities completed and confirmed by NGOs.
-                </p>
-            </div>
-
-            <a href="{{ url_for('volunteer_history') }}"
-               class="primary-button">
-                📋 View Activity History
-            </a>
-        </div>
-
-    </section>
-
-
-    <!-- PROFILE -->
-    <section class="profile-summary">
-
-        <div>
-            <h2>Your Volunteer Profile</h2>
-
-            <p>
-                Keep your profile updated so SevaConnect can provide
-                better recommendations.
-            </p>
-
-            <span class="profile-completion">
-                {% if profile %}
-                    Profile completion: Profile saved
-                {% else %}
-                    Profile completion: Please complete your profile
-                {% endif %}
-            </span>
-        </div>
-
-        <a href="{{ url_for('volunteer_profile') }}"
-           class="primary-button">
-            Edit Profile
-        </a>
-
-    </section>
-
-</main>
-
-
-<footer class="footer">
-
-    <div class="footer-content">
-
-        <div>
-            <h3>🤝 SevaConnect</h3>
-
-            <p>
-                Connecting volunteers with meaningful opportunities.
-            </p>
-        </div>
-
-        <div>
-            <p>© 2026 SevaConnect</p>
-            <p>Community • Service • Impact</p>
-        </div>
-
-    </div>
-
-</footer>
+    </main>
 
 </body>
 </html>
